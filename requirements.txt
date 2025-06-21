@@ -1,0 +1,11 @@
+Flask
+gunicorn
+easyocr
+opencv-python
+pillow
+transformers
+torch
+scikit-learn
+numpy
+requests
+tqdm
