@@ -312,8 +312,11 @@ button i {
 }
 
 .score-svg {
+    width: 100%;
+    height: 100%;
     transform: rotate(-90deg);
 }
+
 
 .score-background {
     fill: none;
@@ -343,6 +346,29 @@ button i {
     color: var(--light-text);
     max-width: 600px;
 }
+
+@media (max-width: 768px) {
+    .score-circle {
+        width: 160px;
+        height: 160px;
+    }
+
+    .score-svg {
+        width: 160px;
+        height: 160px;
+    }
+
+    .score-value {
+        font-size: 2rem;
+    }
+
+    .score-background,
+    .score-progress {
+        stroke-width: 12;
+    }
+}
+
+
 
 /* Loading Overlay */
 .loading-overlay {
