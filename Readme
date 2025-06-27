@@ -6,7 +6,7 @@ An end-to-end machine learning application that extracts handwritten answers fro
 
 ## 🚀 Live Demo
 
-👉 [Try it on Hugging Face Spaces](https://huggingface.co/spaces/yeswanthvarma/xlnet-evaluator-app)
+👉 [Try it on Hugging Face Spaces](https://yeswanthvarma-answer-evaluation-app.hf.space)
 
 ---
 
@@ -28,40 +28,6 @@ This app takes images of handwritten answers and performs:
 - **Custom Training**: Trained on Q-A-R triplets
 - **Docker**: For containerized deployment
 - **Hugging Face Spaces**: Live hosted app
-
----
-
-## 🧩 Architecture & Pipeline
-
-### 🔁 Full Flow
-
-```mermaid
-graph TD
-    A[User Uploads Images] --> B[FastAPI Backend]
-    B --> C[OCR with EasyOCR + OpenCV]
-    C --> D[Text Extracted: Q, A, R]
-    D --> E["Q [SEP] A [SEP] R"]
-    E --> F[XLNet Model]
-    F --> G[Score ∈ 0–100]
-    G --> H[Bonus Logic]
-    H --> I[Final Score → Frontend]
-```
-
-### 🧠 Model Architecture
-
-```plaintext
-Input: Question + Student Answer + Reference Answer
-↓
-Tokenizer (XLNet)
-↓
-XLNet Encoder
-↓
-Linear (768 → 256 → 64 → 1)
-↓
-Sigmoid + Score Scaling
-↓
-Output: Score [0–100]
-```
 
 ---
 
@@ -91,19 +57,6 @@ answer-evaluation-app/
 - **Custom Trained On**: Question, student answer, reference answer, and human-evaluated scores
 - **Loss**: MSELoss
 - **Output**: Score from 0 to 100
-- **Model Location**: [yeswanthvarma/xlnet-evaluator-model](https://huggingface.co/yeswanthvarma/xlnet-evaluator-model)
-
----
-
-## 🐳 Run Locally with Docker
-
-```bash
-docker build -t answer-eval .
-docker run -p 7860:7860 answer-eval
-```
-
-Then visit: [http://localhost:7860](http://localhost:7860)
-
 ---
 
 ## ✍️ Sample Use Case
@@ -124,7 +77,6 @@ Then visit: [http://localhost:7860](http://localhost:7860)
 
 **Yeswanth Varma Gottumukkala**  
 - Email: yeswanthvarma.g@gmail.com  
-- Hugging Face: [@yeswanthvarma](https://huggingface.co/yeswanthvarma)
 
 ---
 
