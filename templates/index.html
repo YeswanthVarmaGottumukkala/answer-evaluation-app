@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Answer Evaluation System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{{ request.url_for('static', path='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
+
         <header>
             <h1>Answer Evaluation System</h1>
             <p>Upload images of question, student answer, and reference answer for evaluation</p>
@@ -119,6 +121,26 @@
             </div>
         </div>
 
+      <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 16px; border-radius: 8px; margin-bottom: 24px; font-family: 'Segoe UI', sans-serif; font-size: 15px;">
+  ⚠️ <strong>This is a Initial Version</strong> developed using limited training data and basic OCR techniques.<br>
+  The scoring model is trained on small examples and may not reflect final production accuracy.<br>
+  Improvements like advanced OCR (TrOCR) and larger datasets are planned.<br><br>
+
+  <div style="background-color: #ffffff; border: 1px dashed #ccc; padding: 12px; border-radius: 6px;">
+    🔍 <strong>Try with Sample Inputs:</strong>
+    <ul style="list-style: none; padding-left: 0; margin-top: 8px;">
+      <li>📘 <a href="/static/sample_question.png" download style="text-decoration: none; color: #007bff;">Download Sample Question</a></li>
+      <li>🧑 <a href="/static/sample_student_answer.png" download style="text-decoration: none; color: #007bff;">Download Student Answer</a></li>
+      <li>📗 <a href="/static/sample_reference_answer.png" download style="text-decoration: none; color: #007bff;">Download Reference Answer</a></li>
+      <li>📘 <a href="/static/sample_question1.png" download style="text-decoration: none; color: #007bff;">Download Sample Question_1</a></li>
+      <li>🧑 <a href="/static/sample_student_answer1.png" download style="text-decoration: none; color: #007bff;">Download Student Answer_1</a></li>
+      <li>📗 <a href="/static/sample_reference_answer1.png" download style="text-decoration: none; color: #007bff;">Download Reference Answer_1</a></li>
+    </ul>
+  </div>
+</div>
+
+
+
         <div class="loading-overlay" style="display: none;">
             <div class="loading-content">
                 <div class="spinner"></div>
@@ -132,7 +154,8 @@
         <p>21B91A6131, 21B91A6106, 21B91A6119, 21B91A6121</p>
         <p>Guided By: A. L. Lavanya, Assistant Professor, CSE, SRKREC.</p>
     </footer>
+    <script src="/static/js/main.js"></script>
+    <script src="{{ request.url_for('static', path='js/main.js') }}"></script>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
