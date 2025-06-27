@@ -180,6 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const circumference = 2 * Math.PI * 90; // 2πr where r=90
         const offset = circumference - (scorePercent / 100) * circumference;
         scoreProgress.style.strokeDashoffset = offset;
+
         
         // Set color based on score
         if (scorePercent >= 80) {
