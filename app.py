@@ -1,109 +1,90 @@
-from flask import Flask, render_template, request, jsonify
+from fastapi import FastAPI, Request, UploadFile, File, Form
+from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 import os
-from werkzeug.utils import secure_filename
+
+
+UPLOAD_FOLDER = "/tmp/uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # ← Move this AFTER defining UPLOAD_FOLDER
+
 from utils.image_processor import extract_text_from_image
+from utils.xlnet_model import get_model_prediction
 from utils.xlnet_model import get_similarity_score
+from werkzeug.utils import secure_filename
+import shutil
 
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload
-app.config['TIMEOUT'] = 300
-# Ensure upload directory exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+app = FastAPI()
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+# Static & Templates
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+@app.get("/", response_class=HTMLResponse)
+def serve_home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
-@app.route('/evaluate', methods=['POST'])
-def evaluate():
+@app.post("/evaluate")
+async def evaluate(
+    request: Request,
+    question: UploadFile = File(...),
+    student_answer: UploadFile = File(...),
+    reference_answer: UploadFile = File(...)
+):
     try:
-        print("Request received at /evaluate")
-        print("Files in request:", list(request.files.keys()))
-        
-        if 'question' not in request.files or 'student_answer' not in request.files or 'reference_answer' not in request.files:
-            print("Missing files in request")
-            return jsonify({'error': 'All three images are required'}), 400
-            
-        question_file = request.files['question']
-        student_answer_file = request.files['student_answer']
-        reference_answer_file = request.files['reference_answer']
-        
-        print(f"File names: {question_file.filename}, {student_answer_file.filename}, {reference_answer_file.filename}")
-        
-        # Check if files are valid
-        for file in [question_file, student_answer_file, reference_answer_file]:
-            if file.filename == '':
-                print(f"Empty filename detected")
-                return jsonify({'error': 'One or more files not selected'}), 400
+        files = {"question": question, "student": student_answer, "reference": reference_answer}
+        paths = {}
+
+        for key, file in files.items():
             if not allowed_file(file.filename):
-                print(f"Invalid file type: {file.filename}")
-                return jsonify({'error': 'Invalid file type. Only PNG, JPG, JPEG allowed'}), 400
-        
-        # Save files
-        question_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(question_file.filename))
-        student_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(student_answer_file.filename))
-        reference_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(reference_answer_file.filename))
-        
-        print(f"Saving files to: {question_path}, {student_path}, {reference_path}")
-        
-        question_file.save(question_path)
-        student_answer_file.save(student_path)
-        reference_answer_file.save(reference_path)
-        
-        print("Files saved successfully")
-        
-        # Extract text from images
-        try:
-            print("Extracting text from question image")
-            question_text = extract_text_from_image(question_path)
-            print(f"Question text: {question_text}")
-            
-            print("Extracting text from student answer image")
-            student_answer_text = extract_text_from_image(student_path)
-            print(f"Student answer text: {student_answer_text}")
-            
-            print("Extracting text from reference answer image")
-            reference_answer_text = extract_text_from_image(reference_path)
-            print(f"Reference answer text: {reference_answer_text}")
-            
-            # Get similarity score
-            print("Calculating similarity score")
-            similarity_score = get_similarity_score(question_text, student_answer_text, reference_answer_text)
-            if similarity_score>=75:
-                similarity_score += 20
-            elif similarity_score>=70 and similarity_score<75:
-                similarity_score +=18
-            elif similarity_score<65 and similarity_score>=60:
-                similarity_score +=16
-            else:
-                similarity_score -= 10
+                return {"error": f"Invalid file type: {file.filename}"}
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            paths[key] = file_path
 
-            print(f"Similarity score: {similarity_score}")
-            
-            return jsonify({
-                'success': True,
-                'score': similarity_score,
-                'question_text': question_text,
-                'student_answer_text': student_answer_text,
-                'reference_answer_text': reference_answer_text
-            })
-        except Exception as e:
-            import traceback
-            print(f"Error in text extraction or scoring: {str(e)}")
-            print(traceback.format_exc())
-            return jsonify({'error': str(e)}), 500
+        question_text = extract_text_from_image(paths["question"])
+        student_text = extract_text_from_image(paths["student"])
+        reference_text = extract_text_from_image(paths["reference"])
+
+        score = get_model_prediction(question_text, student_text, reference_text)
+
+        # 🎯 Bonus adjustment
+        if score >= 75:
+            score += 20
+        elif 70 <= score < 75:
+            score += 18
+        elif 60 <= score < 65:
+            score += 16
+        else:
+            score -= 10
+
+        score = max(0, min(score, 100))
+
+        
+        print("📘 Question:", question_text)
+        print("🧑 Student Answer:", student_text)
+        print("📗 Reference Answer:", reference_text)
+        print("🎯 Raw Score:", score)
+
+
+        return {
+            "success": True,
+            "score": score,
+            "question_text": question_text,
+            "student_answer_text": student_text,
+            "reference_answer_text": reference_text
+        }
+
     except Exception as e:
-        import traceback
-        print(f"Unexpected error in evaluate route: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({'error': str(e)}), 500
+        return {"error": str(e)}
 
-
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=7860)
